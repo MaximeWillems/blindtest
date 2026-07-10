@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anime Blind Test — PIKIlab</title>
+  <meta name="description" content="Blind test d'openings d'animés : reconnais l'anime le plus vite possible.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎧</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <!-- Écran d'accueil -->
+    <section id="screen-home" class="screen">
+      <header class="home-head">
+        <h1>Anime <span class="accent">Blind Test</span></h1>
+        <p>Reconnais l'opening d'animé le plus vite possible.</p>
+      </header>
+
+      <div class="panel">
+        <label class="field">
+          <span>Nombre de manches</span>
+          <select id="rounds">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="15">15</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Difficulté</span>
+          <select id="difficulty">
+            <option value="toutes" selected>Toutes</option>
+            <option value="facile">Populaires (faciles)</option>
+            <option value="moyen">Un peu plus corsé</option>
+          </select>
+        </label>
+
+        <button id="btn-start" class="btn btn-primary">Commencer</button>
+      </div>
+
+      <p class="note">23 openings d'animés · extraits audio via
+        <a href="https://animethemes.moe" target="_blank" rel="noopener">AnimeThemes.moe</a>.</p>
+    </section>
+
+    <!-- Écran de jeu -->
+    <section id="screen-game" class="screen hidden">
+      <div class="game-top">
+        <span id="progress" class="pill">Manche 1 / 5</span>
+        <span id="score" class="pill">Score : 0</span>
+      </div>
+
+      <div class="player">
+        <div class="cover" id="cover">🎧</div>
+        <audio id="audio" preload="auto"></audio>
+        <div class="timer-wrap"><div id="timer-bar" class="timer-bar"></div></div>
+        <button id="btn-play" class="btn btn-play">▶︎ Écouter</button>
+      </div>
+
+      <div id="choices" class="choices"><!-- QCM injecté par JS --></div>
+
+      <div id="reveal" class="reveal hidden">
+        <p id="reveal-result" class="reveal-result"></p>
+        <div>
+          <p class="reveal-title">C'était : <strong id="answer-title"></strong></p>
+          <p id="answer-song" class="reveal-sub"></p>
+        </div>
+        <button id="btn-next" class="btn btn-primary">Suivant</button>
+      </div>
+    </section>
+
+    <!-- Écran de fin -->
+    <section id="screen-end" class="screen hidden">
+      <h2>Partie terminée 🎉</h2>
+      <p class="final-score">Score final : <strong id="final-score">0</strong></p>
+      <button id="btn-replay" class="btn btn-primary">Rejouer</button>
+    </section>
+  </main>
+
+  <footer>pikilab.app — fait maison par PIKI 🧪</footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

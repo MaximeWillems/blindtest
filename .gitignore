@@ -1,0 +1,7 @@
+# Config locale de dev (Claude Code / serveur de preview) — inutile au déploiement
+.claude/
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+desktop.ini
