@@ -8,18 +8,28 @@ Devine l'animé à partir de l'extrait audio de son opening, révèle la répons
 
 ## État actuel
 
-Prototype jouable — mode solo en QCM :
+Prototype jouable — 3 modes solo (choisis sur l'accueil) :
 
-- `index.html` — 3 écrans : accueil (manches + difficulté), jeu, fin
+- **Classique** — QCM 4 propositions, bonus de rapidité
+- **Fiche complète** — saisir un max d'infos (animé, opening, artiste, année), 1 pt / info
+- **Éclair** — QCM mais l'extrait ne joue qu'1 seconde (lecture réelle)
+- **En ligne** — écrans « salon » (créer / rejoindre) en place ; réseau à brancher (voir plus bas)
+
+Fichiers :
+
+- `index.html` — 3 écrans : accueil (mode + manches + difficulté), jeu, fin
 - `style.css` — dark mode auto, responsive mobile, branding PIKI
 - `data.js` — **banque de 23 openings** générée depuis l'API AnimeThemes.moe
-- `app.js` — logique : tirage, timer, QCM 4 choix, bonus rapidité, révélation
+- `app.js` — système de modes : tirage, timer, saisie/QCM, scoring, révélation
 - `.claude/launch.json` — serveur local de test (`python -m http.server`)
 - `wrangler.jsonc` / `.assetsignore` — déploiement Cloudflare Pages/Workers
 
 Déroulé d'une manche : on écoute l'extrait (**jaquette masquée**, pas de spoiler),
-on choisit parmi 4 titres avant la fin du timer, puis la **jaquette + les infos**
-sont révélées. Répondre vite = plus de points.
+on répond avant la fin du timer, puis la **jaquette + les infos** sont révélées.
+
+> Mode Fiche : la saisie est comparée sans tenir compte de la casse/accents et
+> accepte les titres partiels. Amélioration prévue : liste d'alias par animé
+> (ex. « Attack on Titan » = « L'Attaque des Titans » = « Shingeki no Kyojin »).
 
 ## Source des données — AnimeThemes.moe
 
@@ -52,6 +62,20 @@ Les extraits AnimeThemes sont en `.ogg`, lus par Chrome/Edge/Firefox/Android mai
 **pas par Safari iOS**. Sur iPhone, le son ne se lancera pas (le QCM reste jouable).
 Correctif prévu : transcoder les extraits en `.m4a`/`.mp3` et les auto-héberger
 (Cloudflare R2), ou passer par un petit Worker.
+
+## Mode en ligne — où on en est
+
+L'**UI est en place** (`online.js` + écrans lobby/salon dans `index.html`) : créer un
+salon avec un code, rejoindre avec un code, liste des joueurs, réglages hôte, lancer.
+Pour l'instant c'est un **aperçu local** — bannière « réseau non branché ». Le
+lancement réutilise le moteur de jeu solo, les scores ne sont pas encore synchronisés.
+
+Le câblage réseau passe par l'objet **`Net`** (dans `online.js`), aujourd'hui stubbé
+avec des `TODO`. Reste à choisir la techno (décision en attente) :
+
+1. **Salon temps réel** — Cloudflare Worker + Durable Objects (vrai multijoueur live).
+2. **Défi du jour** — mêmes openings pour tous chaque jour, partage de score (quasi-statique, gratuit).
+3. **Salon P2P** — WebRTC, sans serveur à héberger (plus fragile).
 
 ## Idées d'extension
 

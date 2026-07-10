@@ -18,6 +18,24 @@
       </header>
 
       <div class="panel">
+        <div class="field">
+          <span>Mode de jeu</span>
+          <div class="modes" id="modes">
+            <button type="button" class="mode-card is-active" data-mode="qcm">
+              <strong>Classique</strong><small>QCM · 4 propositions</small>
+            </button>
+            <button type="button" class="mode-card" data-mode="fiche">
+              <strong>Fiche complète</strong><small>Devine un max d'infos</small>
+            </button>
+            <button type="button" class="mode-card" data-mode="flash">
+              <strong>Éclair</strong><small>1 seconde d'extrait</small>
+            </button>
+            <button type="button" class="mode-card mode-card--online" data-mode="online">
+              <strong>En ligne</strong><small>Multijoueur · aperçu</small>
+            </button>
+          </div>
+        </div>
+
         <label class="field">
           <span>Nombre de manches</span>
           <select id="rounds">
@@ -55,9 +73,25 @@
         <audio id="audio" preload="auto"></audio>
         <div class="timer-wrap"><div id="timer-bar" class="timer-bar"></div></div>
         <button id="btn-play" class="btn btn-play">▶︎ Écouter</button>
+        <div class="volume">
+          <button id="vol-icon" class="vol-icon" type="button" title="Couper / rétablir le son">🔊</button>
+          <input id="volume" type="range" min="0" max="100" value="80" aria-label="Volume">
+        </div>
       </div>
 
       <div id="choices" class="choices"><!-- QCM injecté par JS --></div>
+
+      <form id="fiche" class="fiche hidden" autocomplete="off">
+        <label class="fiche-field"><span>Animé</span>
+          <input id="f-anime" type="text" placeholder="Nom de l'animé"></label>
+        <label class="fiche-field"><span>Opening</span>
+          <input id="f-song" type="text" placeholder="Titre de la musique"></label>
+        <label class="fiche-field"><span>Artiste / groupe</span>
+          <input id="f-artist" type="text" placeholder="Qui chante ?"></label>
+        <label class="fiche-field"><span>Année</span>
+          <input id="f-year" type="text" inputmode="numeric" placeholder="ex : 2013"></label>
+        <button type="submit" id="btn-validate" class="btn btn-primary">Valider</button>
+      </form>
 
       <div id="reveal" class="reveal hidden">
         <p id="reveal-result" class="reveal-result"></p>
@@ -65,6 +99,7 @@
           <p class="reveal-title">C'était : <strong id="answer-title"></strong></p>
           <p id="answer-song" class="reveal-sub"></p>
         </div>
+        <div id="reveal-fiche" class="reveal-fiche hidden"></div>
         <button id="btn-next" class="btn btn-primary">Suivant</button>
       </div>
     </section>
@@ -75,11 +110,65 @@
       <p class="final-score">Score final : <strong id="final-score">0</strong></p>
       <button id="btn-replay" class="btn btn-primary">Rejouer</button>
     </section>
+
+    <!-- Lobby en ligne (aperçu — réseau non branché) -->
+    <section id="screen-online" class="screen hidden">
+      <button class="link-back" data-back="home">← Retour</button>
+      <h2>Jouer en ligne</h2>
+      <p class="preview-banner">Aperçu — le réseau n'est pas encore branché.</p>
+
+      <div class="panel">
+        <label class="field"><span>Ton pseudo</span>
+          <input id="on-pseudo" type="text" value="PIKI" maxlength="16">
+        </label>
+        <button id="btn-create" class="btn btn-primary">Créer un salon</button>
+        <div class="or">ou</div>
+        <label class="field"><span>Code du salon</span>
+          <input id="on-code" type="text" placeholder="ABCD" maxlength="4">
+        </label>
+        <button id="btn-join" class="btn btn-play">Rejoindre</button>
+      </div>
+    </section>
+
+    <!-- Salle d'attente (aperçu) -->
+    <section id="screen-room" class="screen hidden">
+      <button class="link-back" data-back="online">← Quitter</button>
+      <h2 class="room-head">Salon <span id="room-code" class="room-code"></span>
+        <button id="btn-copy" class="btn-copy" title="Copier le code">⧉</button>
+      </h2>
+      <p class="preview-banner">Aperçu — les autres joueurs apparaîtront ici une fois le réseau branché.</p>
+
+      <div class="panel">
+        <div class="field"><span>Joueurs</span>
+          <ul id="players" class="players"></ul>
+        </div>
+
+        <div id="host-controls">
+          <label class="field"><span>Mode</span>
+            <select id="on-mode">
+              <option value="qcm" selected>Classique (QCM)</option>
+              <option value="fiche">Fiche complète</option>
+              <option value="flash">Éclair (1 s)</option>
+            </select>
+          </label>
+          <label class="field"><span>Nombre de manches</span>
+            <select id="on-rounds">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="15">15</option>
+            </select>
+          </label>
+          <button id="btn-launch" class="btn btn-primary">Lancer la partie</button>
+        </div>
+        <p id="room-wait" class="note">En attente que l'hôte lance la partie…</p>
+      </div>
+    </section>
   </main>
 
   <footer>pikilab.app — fait maison par PIKI 🧪</footer>
 
   <script src="data.js"></script>
   <script src="app.js"></script>
+  <script src="online.js"></script>
 </body>
 </html>
