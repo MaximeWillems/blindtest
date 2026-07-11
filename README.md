@@ -12,24 +12,28 @@ Prototype jouable — 3 modes solo (choisis sur l'accueil) :
 
 - **Classique** — QCM 4 propositions, bonus de rapidité
 - **Fiche complète** — saisir un max d'infos (animé, opening, artiste, année), 1 pt / info
-- **Éclair** — QCM mais l'extrait ne joue qu'1 seconde (lecture réelle)
+- **Éclair** — deviner l'animé en **saisie libre** sur **1 seconde** d'extrait (démarrée dans le morceau, pas sur l'intro)
 - **En ligne** — écrans « salon » (créer / rejoindre) en place ; réseau à brancher (voir plus bas)
 
 Fichiers :
 
 - `index.html` — 3 écrans : accueil (mode + manches + difficulté), jeu, fin
 - `style.css` — dark mode auto, responsive mobile, branding PIKI
-- `data.js` — **banque de 23 openings** générée depuis l'API AnimeThemes.moe
+- `data.js` — **banque de 53 openings** générée depuis l'API AnimeThemes.moe
+- `aliases.js` — alias de titres (FR/anglais/japonais) pour la saisie du mode Fiche
 - `app.js` — système de modes : tirage, timer, saisie/QCM, scoring, révélation
 - `.claude/launch.json` — serveur local de test (`python -m http.server`)
 - `wrangler.jsonc` / `.assetsignore` — déploiement Cloudflare Pages/Workers
 
 Déroulé d'une manche : on écoute l'extrait (**jaquette masquée**, pas de spoiler),
 on répond avant la fin du timer, puis la **jaquette + les infos** sont révélées.
+Le bouton lecture fait aussi **pause** (fige le chrono), et une barre de volume est à côté.
 
-> Mode Fiche : la saisie est comparée sans tenir compte de la casse/accents et
-> accepte les titres partiels. Amélioration prévue : liste d'alias par animé
-> (ex. « Attack on Titan » = « L'Attaque des Titans » = « Shingeki no Kyojin »).
+> Mode Fiche — tolérance de la saisie : ignore casse / accents / articles,
+> accepte les titres partiels, pardonne les petites fautes de frappe (distance
+> d'édition Damerau, y compris l'inversion de 2 lettres), et reconnaît chaque
+> animé en **FR / anglais / japonais** + abréviations (alias dans `aliases.js`,
+> ex. « Attack on Titan » = « L'Attaque des Titans » = « Shingeki no Kyojin »).
 
 ## Source des données — AnimeThemes.moe
 

@@ -3,7 +3,7 @@
 // 3 modes solo sur la banque OPENINGS (voir data.js) :
 //   - qcm    : QCM 4 propositions, bonus de rapidité
 //   - fiche  : saisir un max d'infos (animé, opening, artiste, année), 1 pt / info
-//   - flash  : QCM mais l'extrait ne joue qu'1 seconde
+//   - flash  : deviner l'animé (saisie libre) sur 1 seconde d'extrait seulement
 // Le mode « en ligne » (multijoueur) viendra avec un petit backend — voir README.
 //
 // Extension prévue : mode « soirée » local, alias de titres pour la saisie,
@@ -64,12 +64,54 @@ function norm(s) {
     .replace(/[^a-z0-9]+/g, "");
 }
 
+// Distance d'édition (Damerau-OSA) : nombre de corrections pour passer d'une
+// chaîne à l'autre — ajout, suppression, remplacement, ou inversion de deux
+// lettres voisines (la faute de frappe la plus fréquente) comptée pour 1.
+function editDistance(a, b) {
+  const m = a.length, n = b.length;
+  if (!m) return n;
+  if (!n) return m;
+  let prev2 = null;
+  let prev = Array.from({ length: n + 1 }, (_, i) => i);
+  for (let i = 1; i <= m; i++) {
+    const cur = new Array(n + 1);
+    cur[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        cur[j] = Math.min(cur[j], prev2[j - 2] + 1); // inversion de 2 lettres
+      }
+    }
+    prev2 = prev;
+    prev = cur;
+  }
+  return prev[n];
+}
+
+// Fautes tolérées selon la longueur de la réponse (0 pour les mots très courts)
+function fuzzyTol(len) {
+  if (len <= 4) return 0;
+  if (len <= 7) return 1;
+  if (len <= 11) return 2;
+  return 3;
+}
+
+function isCloseEnough(g, a) {
+  if (!a) return false;
+  if (a === g) return true;
+  // titre partiel (ex. « fullmetal alchemist » pour la version Brotherhood)
+  if (g.length >= 4 && a.length >= 4 && (a.includes(g) || g.includes(a))) return true;
+  // petites fautes d'orthographe
+  return editDistance(g, a) <= fuzzyTol(a.length);
+}
+
 function matchAnswer(guess, answer, opt) {
   const g = norm(guess);
   if (!g) return false;
-  if (opt && opt.exact) return g === norm(answer);
+  if (opt && opt.exact) return g === norm(answer); // année : exact
   const candidates = [answer, ...((opt && opt.aliases) || [])].map(norm).filter(Boolean);
-  return candidates.some((a) => a === g || g.includes(a) || (g.length >= 4 && a.includes(g)));
+  return candidates.some((a) => isCloseEnough(g, a));
 }
 
 // Démarre une partie (partagé par le solo et le mode en ligne)
@@ -92,7 +134,8 @@ function loadRound() {
   state.answered = false;
   stopFlashClip();
   const current = state.deck[state.index];
-  const isFiche = state.mode === "fiche";
+  const usesForm = state.mode === "fiche" || state.mode === "flash"; // saisie libre
+  const onlyAnime = state.mode === "flash";                          // un seul champ
 
   $("progress").textContent = `Manche ${state.index + 1} / ${state.totalRounds}`;
   $("score").textContent = `Score : ${state.score}`;
@@ -108,13 +151,17 @@ function loadRound() {
   const audio = $("audio");
   audio.src = current.audio || "";
   audio.load();
+  setPlayBtn("idle");
 
-  // Bascule QCM <-> Fiche
-  $("choices").classList.toggle("hidden", isFiche);
-  $("fiche").classList.toggle("hidden", !isFiche);
+  // Bascule QCM <-> saisie libre
+  $("choices").classList.toggle("hidden", usesForm);
+  $("fiche").classList.toggle("hidden", !usesForm);
 
-  if (isFiche) {
+  if (usesForm) {
     ["f-anime", "f-song", "f-artist", "f-year"].forEach((id) => ($(id).value = ""));
+    // En éclair, on ne demande que l'animé
+    ["f-song", "f-artist", "f-year"].forEach((id) =>
+      $(id).closest(".fiche-field").classList.toggle("hidden", onlyAnime));
   } else {
     const wrong = shuffle(OPENINGS.filter((o) => o.id !== current.id))
       .slice(0, CHOICES_PER_ROUND - 1);
@@ -130,7 +177,7 @@ function loadRound() {
     });
   }
 
-  state.roundTime = isFiche ? FICHE_TIME : GUESS_TIME;
+  state.roundTime = state.mode === "fiche" ? FICHE_TIME : GUESS_TIME;
   resetTimer();
 }
 
@@ -151,6 +198,7 @@ function startTimer() {
       clearInterval(state.timerId);
       if (!state.answered) {
         if (state.mode === "fiche") validateFiche(null);
+        else if (state.mode === "flash") validateFlash(null);
         else answer(null, null); // temps écoulé
       }
     }
@@ -165,19 +213,55 @@ function stopFlashClip() {
   }
 }
 
-function playAudio() {
-  const audio = $("audio");
-  if (!audio.src) return;
-  stopFlashClip();
-  audio.currentTime = 0;
-  audio.play().catch(() => { /* extrait indispo : on continue sans son */ });
-  startTimer();
+function setPlayBtn(phase) {
+  const btn = $("btn-play");
   if (state.mode === "flash") {
-    const stopAt = FLASH_MS / 1000;
-    state.flashClip = () => {
-      if (audio.currentTime >= stopAt) { audio.pause(); stopFlashClip(); }
-    };
-    audio.addEventListener("timeupdate", state.flashClip);
+    btn.textContent = phase === "idle" ? "▶︎ Écouter (1 s)" : "🔁 Réécouter (1 s)";
+    return;
+  }
+  btn.textContent = phase === "playing" ? "⏸ Pause" : phase === "paused" ? "▶︎ Reprendre" : "▶︎ Écouter";
+}
+
+// Joue l'extrait éclair : ~1 s de son en démarrant plus loin dans le morceau
+// (l'intro est souvent silencieuse), coupé après 1 s de lecture *réelle*.
+function playFlashClip() {
+  const audio = $("audio");
+  stopFlashClip();
+  const dur = audio.duration || 0;
+  let start = 0;
+  if (dur > 8) start = Math.min(30, Math.max(6, dur * 0.22));
+  start = Math.min(start, Math.max(0, dur - 1.5));
+  try { audio.currentTime = start; } catch (e) { /* pas encore seekable */ }
+  audio.play().catch(() => { /* extrait indispo : on continue sans son */ });
+  const stopAt = start + FLASH_MS / 1000;
+  state.flashClip = () => {
+    if (audio.currentTime >= stopAt) { audio.pause(); stopFlashClip(); }
+  };
+  audio.addEventListener("timeupdate", state.flashClip);
+}
+
+// Bouton lecture : en éclair, (ré)écoute le 1 s ; sinon lecture/pause (gèle le chrono)
+function onPlayButton() {
+  const audio = $("audio");
+  if (!audio.src || state.answered) return;
+
+  if (state.mode === "flash") {
+    const fresh = state.timeLeft === state.roundTime;
+    playFlashClip();
+    if (fresh) startTimer();
+    setPlayBtn("replay");
+    return;
+  }
+
+  if (audio.paused) {
+    if (state.timeLeft === state.roundTime) audio.currentTime = 0; // 1ère écoute
+    audio.play().catch(() => { /* extrait indispo : on continue sans son */ });
+    startTimer();
+    setPlayBtn("playing");
+  } else {
+    audio.pause();
+    clearInterval(state.timerId);
+    setPlayBtn("paused");
   }
 }
 
@@ -204,6 +288,7 @@ function answer(choice, btn) {
   clearInterval(state.timerId);
   stopFlashClip();
   $("audio").pause();
+  setPlayBtn("idle");
 
   const current = state.deck[state.index];
   const correct = choice && choice.id === current.id;
@@ -239,6 +324,7 @@ function validateFiche(e) {
   state.answered = true;
   clearInterval(state.timerId);
   $("audio").pause();
+  setPlayBtn("idle");
 
   const current = state.deck[state.index];
   const fields = [
@@ -269,6 +355,29 @@ function validateFiche(e) {
   const result = $("reveal-result");
   result.textContent = `${gained} / ${fields.length} infos · +${gained}`;
   result.className = `reveal-result ${gained > 0 ? "good" : "bad"}`;
+
+  revealCommon(current);
+}
+
+// Mode éclair : deviner l'animé à partir d'1 s (saisie libre, bonus de rapidité)
+function validateFlash(e) {
+  if (e) e.preventDefault();
+  if (state.answered) return;
+  state.answered = true;
+  clearInterval(state.timerId);
+  stopFlashClip();
+  $("audio").pause();
+  setPlayBtn("idle");
+
+  const current = state.deck[state.index];
+  const ok = matchAnswer($("f-anime").value, current.title, { aliases: current.aliases });
+  let gained = 0;
+  if (ok) { gained = Math.max(1, Math.round(state.timeLeft)); state.score += gained; }
+
+  $("reveal-fiche").classList.add("hidden");
+  const result = $("reveal-result");
+  if (ok) { result.textContent = `✅ Bien joué ! +${gained}`; result.className = "reveal-result good"; }
+  else { result.textContent = "❌ Raté"; result.className = "reveal-result bad"; }
 
   revealCommon(current);
 }
@@ -315,9 +424,9 @@ $("vol-icon").onclick = () => {
 
 // Événements
 $("btn-start").onclick = startGame;
-$("btn-play").onclick = playAudio;
+$("btn-play").onclick = onPlayButton;
 $("btn-next").onclick = nextRound;
 $("btn-replay").onclick = () => show("home");
-$("fiche").onsubmit = validateFiche;
+$("fiche").onsubmit = (e) => (state.mode === "flash" ? validateFlash(e) : validateFiche(e));
 
 show("home");
