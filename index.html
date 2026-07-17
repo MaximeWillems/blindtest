@@ -25,13 +25,10 @@
               <strong>Classique</strong><small>QCM · 4 propositions</small>
             </button>
             <button type="button" class="mode-card" data-mode="fiche">
-              <strong>Fiche complète</strong><small>Devine un max d'infos</small>
+              <strong>Fiche complète</strong><small>Infos · longueur réglable</small>
             </button>
             <button type="button" class="mode-card" data-mode="flash">
               <strong>Éclair</strong><small>1 seconde d'extrait</small>
-            </button>
-            <button type="button" class="mode-card" data-mode="full">
-              <strong>Chanson complète</strong><small>Écoute libre, sans pause</small>
             </button>
             <button type="button" class="mode-card mode-card--online" data-mode="online">
               <strong>En ligne</strong><small>Multijoueur · aperçu</small>
@@ -54,6 +51,17 @@
             <option value="toutes" selected>Toutes</option>
             <option value="facile">Populaires (faciles)</option>
             <option value="moyen">Un peu plus corsé</option>
+          </select>
+        </label>
+
+        <label class="field hidden" id="clip-len-field">
+          <span>Longueur de l'extrait <small class="hint">(mode Fiche)</small></span>
+          <select id="clip-len">
+            <option value="1">1 seconde</option>
+            <option value="5">5 secondes</option>
+            <option value="10">10 secondes</option>
+            <option value="20">20 secondes</option>
+            <option value="full" selected>Chanson entière</option>
           </select>
         </label>
 

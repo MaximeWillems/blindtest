@@ -8,12 +8,11 @@ Devine l'animé à partir de l'extrait audio de son opening, révèle la répons
 
 ## État actuel
 
-Prototype jouable — 4 modes solo (choisis sur l'accueil) :
+Prototype jouable — 3 modes solo (choisis sur l'accueil) :
 
 - **Classique** — QCM 4 propositions, bonus de rapidité
-- **Fiche complète** — saisir un max d'infos, points par info (voir `FICHE_POINTS` dans `app.js` : musique 3, animé 2, artiste 2, type/numéro/année 1 — max 10/manche)
+- **Fiche complète** — saisir un max d'infos, avec **longueur d'extrait réglable** (1 s → chanson entière, pas de chrono). Points par info (voir `FICHE_POINTS` dans `app.js` : musique 3, animé 2, artiste 2, type/numéro/année 1 — max 10/manche)
 - **Éclair** — deviner l'animé en **saisie libre** sur **1 seconde** d'extrait (démarrée dans le morceau, pas sur l'intro)
-- **Chanson complète** — opening entier, **sans pause ni chrono** ; saisie libre du nom de l'animé, on révèle quand on est prêt (score forfaitaire)
 - **En ligne** — écrans « salon » (créer / rejoindre) en place ; réseau à brancher (voir plus bas)
 
 Une case **« Inclure aussi les endings »** sur l'accueil ajoute les ED aux OP
@@ -30,8 +29,9 @@ Fichiers :
 - `wrangler.jsonc` / `.assetsignore` — déploiement Cloudflare Pages/Workers
 
 Déroulé d'une manche : on écoute l'extrait (**jaquette masquée**, pas de spoiler),
-on répond avant la fin du timer, puis la **jaquette + les infos** sont révélées.
-Le bouton lecture fait aussi **pause** (fige le chrono), et une barre de volume est à côté.
+puis la **jaquette + les infos** sont révélées à la réponse. En Classique/Éclair, le
+chrono limite le **temps d'écoute** : quand il expire, le son se coupe mais on peut
+**encore répondre** (sans bonus de rapidité). Une barre de volume est à côté du lecteur.
 
 > Mode Fiche — tolérance de la saisie : ignore casse / accents / articles,
 > accepte les titres partiels, pardonne les petites fautes de frappe (distance

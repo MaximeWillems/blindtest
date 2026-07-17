@@ -74,6 +74,7 @@ main {
 }
 
 .field { display: flex; flex-direction: column; gap: .4rem; font-weight: 600; }
+.hint { color: var(--text-muted); font-weight: 500; font-size: .8rem; }
 
 /* Sélecteur de mode */
 .modes { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
@@ -118,6 +119,7 @@ main {
   transition: transform .12s ease, filter .12s ease, background .12s ease;
 }
 .btn:active { transform: scale(.98); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
 .btn-primary { background: var(--accent-strong); color: #fff; }
 .btn-primary:hover { filter: brightness(1.08); }
 .btn-play { background: var(--bg-card); border: 1px solid var(--border); color: var(--text); }

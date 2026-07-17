@@ -1,19 +1,15 @@
 // Anime Blind Test — logique de jeu.
 //
-// 3 modes solo sur la banque OPENINGS (voir data.js) :
+// Modes solo sur la banque OPENINGS (voir data.js) :
 //   - qcm    : QCM 4 propositions, bonus de rapidité
-//   - fiche  : saisir un max d'infos (animé, opening, artiste, année), 1 pt / info
+//   - fiche  : saisir un max d'infos, longueur d'extrait réglable (1 s → chanson entière)
 //   - flash  : deviner l'animé (saisie libre) sur 1 seconde d'extrait seulement
-//   - full   : chanson entière, sans pause ni chrono ; on répond puis « prêt » révèle
 // Le mode « en ligne » (multijoueur) viendra avec un petit backend — voir README.
 //
-// Extension prévue : mode « soirée » local, alias de titres pour la saisie,
-// filtres décennie/genre, salon en ligne.
+// Extension prévue : mode « soirée » local, filtres décennie/genre, salon en ligne.
 
-const GUESS_TIME = 15;        // secondes pour répondre (qcm / flash)
-const FICHE_TIME = 30;        // secondes pour remplir la fiche
+const GUESS_TIME = 15;        // secondes d'écoute (qcm / éclair) ; après, on répond sans le son
 const FLASH_MS = 1000;        // durée jouée en mode éclair
-const FULL_SCORE = 10;        // points d'une bonne réponse en mode chanson complète
 const CHOICES_PER_ROUND = 4;  // propositions au QCM
 
 // Points par info devinée en mode Fiche complète
@@ -29,6 +25,7 @@ const state = {
   answered: false,
   timerId: null,
   flashClip: null,
+  clipLen: Infinity, // longueur d'extrait du mode fiche (secondes, ou Infinity)
   timeLeft: 0
 };
 
@@ -122,6 +119,8 @@ function matchAnswer(guess, answer, opt) {
 // Démarre une partie (partagé par le solo et le mode en ligne)
 function beginGame(mode, rounds, difficulty, includeEd) {
   state.mode = mode;
+  const lv = $("clip-len").value;
+  state.clipLen = lv === "full" ? Infinity : Number(lv);
   let pool = includeEd ? OPENINGS : OPENINGS.filter((o) => o.type === "OP");
   if (difficulty !== "toutes") pool = pool.filter((o) => o.difficulty === difficulty);
   state.totalRounds = Math.min(rounds, pool.length);
@@ -140,8 +139,8 @@ function loadRound() {
   state.answered = false;
   stopFlashClip();
   const current = state.deck[state.index];
-  const usesForm = ["fiche", "flash", "full"].includes(state.mode);  // saisie libre
-  const onlyAnime = state.mode === "flash" || state.mode === "full"; // un seul champ
+  const usesForm = state.mode === "fiche" || state.mode === "flash"; // saisie libre
+  const onlyAnime = state.mode === "flash";                          // un seul champ
 
   $("progress").textContent = `Manche ${state.index + 1} / ${state.totalRounds}`;
   $("score").textContent = `Score : ${state.score}`;
@@ -157,9 +156,9 @@ function loadRound() {
   const audio = $("audio");
   audio.src = current.audio || "";
   audio.load();
+  $("btn-play").disabled = false;
   setPlayBtn("idle");
-  $("timer-wrap").classList.toggle("hidden", state.mode === "full"); // full : pas de chrono
-  $("btn-validate").textContent = state.mode === "full" ? "Prêt — révéler" : "Valider";
+  $("timer-wrap").classList.toggle("hidden", state.mode === "fiche"); // fiche : pas de chrono
 
   // Bascule QCM <-> saisie libre
   $("choices").classList.toggle("hidden", usesForm);
@@ -167,7 +166,7 @@ function loadRound() {
 
   if (usesForm) {
     ["f-anime", "f-type", "f-num", "f-song", "f-artist", "f-year"].forEach((id) => ($(id).value = ""));
-    // En éclair / chanson complète, on ne demande que l'animé
+    // En éclair, on ne demande que l'animé
     ["f-type", "f-num", "f-song", "f-artist", "f-year"].forEach((id) =>
       $(id).closest(".fiche-field").classList.toggle("hidden", onlyAnime));
   } else {
@@ -192,7 +191,7 @@ function loadRound() {
     });
   }
 
-  state.roundTime = state.mode === "fiche" ? FICHE_TIME : GUESS_TIME;
+  state.roundTime = GUESS_TIME;
   resetTimer();
 }
 
@@ -211,16 +210,22 @@ function startTimer() {
     $("timer-bar").style.width = pct + "%";
     if (state.timeLeft <= 0) {
       clearInterval(state.timerId);
-      if (!state.answered) {
-        if (state.mode === "fiche") validateFiche(null);
-        else if (state.mode === "flash") validateAnime(null);
-        else answer(null, null); // temps écoulé
-      }
+      if (!state.answered) endListening(); // fin de l'écoute, mais on peut encore répondre
     }
   }, tick);
 }
 
-// Coupe l'écoute au bout de FLASH_MS de lecture *réelle* (mode éclair)
+// Fin du temps : on coupe le son (plus d'écoute), mais la manche continue —
+// le joueur garde le temps de noter ses réponses et de valider.
+function endListening() {
+  $("audio").pause();
+  stopFlashClip();
+  const btn = $("btn-play");
+  btn.disabled = true;
+  btn.textContent = "🔇 Écoute terminée";
+}
+
+// Retire le déclencheur de coupure d'extrait (éclair / fiche)
 function stopFlashClip() {
   if (state.flashClip) {
     $("audio").removeEventListener("timeupdate", state.flashClip);
@@ -232,6 +237,10 @@ function setPlayBtn(phase) {
   const btn = $("btn-play");
   if (state.mode === "flash") {
     btn.textContent = phase === "idle" ? "▶︎ Écouter (1 s)" : "🔁 Réécouter (1 s)";
+    return;
+  }
+  if (state.mode === "fiche") {
+    btn.textContent = phase === "idle" ? "▶︎ Écouter" : "🔁 Réécouter";
     return;
   }
   btn.textContent = phase === "playing" ? "⏸ Pause" : phase === "paused" ? "▶︎ Reprendre" : "▶︎ Écouter";
@@ -255,14 +264,38 @@ function playFlashClip() {
   audio.addEventListener("timeupdate", state.flashClip);
 }
 
-// Bouton lecture : en éclair, (ré)écoute le 1 s ; sinon lecture/pause (gèle le chrono)
+// Joue l'extrait du mode fiche selon la longueur choisie (state.clipLen secondes,
+// ou la chanson entière). Redémarre du début à chaque écoute (pas de pause).
+function playFicheClip() {
+  const audio = $("audio");
+  if (!audio.src) return;
+  stopFlashClip();
+  const L = state.clipLen;
+  const dur = audio.duration || 0;
+  let start = 0;
+  if (L <= 3 && dur > 8) {          // extrait très court : on saute l'intro souvent muette
+    start = Math.min(30, Math.max(6, dur * 0.22));
+    start = Math.min(start, Math.max(0, dur - L - 1));
+  }
+  try { audio.currentTime = start; } catch (e) { /* pas encore seekable */ }
+  audio.play().catch(() => { /* extrait indispo : on continue sans son */ });
+  if (L !== Infinity) {
+    const stopAt = start + L;
+    state.flashClip = () => {
+      if (audio.currentTime >= stopAt) { audio.pause(); setPlayBtn("idle"); stopFlashClip(); }
+    };
+    audio.addEventListener("timeupdate", state.flashClip);
+  }
+}
+
+// Bouton lecture : éclair/fiche (ré)écoutent l'extrait ; qcm lecture/pause (gèle le chrono)
 function onPlayButton() {
   const audio = $("audio");
   if (!audio.src || state.answered) return;
 
-  if (state.mode === "full") {          // chanson entière : pas de pause, pas de chrono
-    audio.currentTime = 0;
-    audio.play().catch(() => { /* extrait indispo : on continue sans son */ });
+  if (state.mode === "fiche") {         // (ré)écoute selon la longueur choisie, pas de chrono
+    playFicheClip();
+    setPlayBtn("replay");
     return;
   }
 
@@ -303,7 +336,7 @@ function revealCommon(current) {
   $("reveal").classList.remove("hidden");
 }
 
-// Modes qcm / flash
+// Mode qcm
 function answer(choice, btn) {
   if (state.answered) return;
   state.answered = true;
@@ -339,12 +372,13 @@ function answer(choice, btn) {
   revealCommon(current);
 }
 
-// Mode fiche : 1 point par info correcte
+// Mode fiche : points par info correcte (voir FICHE_POINTS)
 function validateFiche(e) {
   if (e) e.preventDefault();
   if (state.answered) return;
   state.answered = true;
   clearInterval(state.timerId);
+  stopFlashClip();
   $("audio").pause();
   setPlayBtn("idle");
 
@@ -388,8 +422,7 @@ function validateFiche(e) {
   revealCommon(current);
 }
 
-// Modes éclair / chanson complète : deviner l'animé en saisie libre
-// (bonus de rapidité en éclair, points forfaitaires en chanson complète)
+// Mode éclair : deviner l'animé en saisie libre (bonus de rapidité)
 function validateAnime(e) {
   if (e) e.preventDefault();
   if (state.answered) return;
@@ -403,7 +436,7 @@ function validateAnime(e) {
   const ok = matchAnswer($("f-anime").value, current.title, { aliases: current.aliases });
   let gained = 0;
   if (ok) {
-    gained = state.mode === "flash" ? Math.max(1, Math.round(state.timeLeft)) : FULL_SCORE;
+    gained = Math.max(1, Math.round(state.timeLeft));
     state.score += gained;
   }
 
@@ -432,6 +465,7 @@ document.querySelectorAll(".mode-card").forEach((card) => {
     document.querySelectorAll(".mode-card").forEach((c) => c.classList.remove("is-active"));
     card.classList.add("is-active");
     state.mode = card.dataset.mode;
+    $("clip-len-field").classList.toggle("hidden", state.mode !== "fiche"); // longueur : mode Fiche
   };
 });
 
