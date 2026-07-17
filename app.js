@@ -117,9 +117,10 @@ function matchAnswer(guess, answer, opt) {
 }
 
 // Démarre une partie (partagé par le solo et le mode en ligne)
-function beginGame(mode, rounds, difficulty) {
+function beginGame(mode, rounds, difficulty, includeEd) {
   state.mode = mode;
-  const pool = difficulty === "toutes" ? OPENINGS : OPENINGS.filter((o) => o.difficulty === difficulty);
+  let pool = includeEd ? OPENINGS : OPENINGS.filter((o) => o.type === "OP");
+  if (difficulty !== "toutes") pool = pool.filter((o) => o.difficulty === difficulty);
   state.totalRounds = Math.min(rounds, pool.length);
   state.deck = shuffle(pool).slice(0, state.totalRounds);
   state.index = 0;
@@ -129,7 +130,7 @@ function beginGame(mode, rounds, difficulty) {
 }
 
 function startGame() {
-  beginGame(state.mode, Number($("rounds").value), $("difficulty").value);
+  beginGame(state.mode, Number($("rounds").value), $("difficulty").value, $("include-ed").checked);
 }
 
 function loadRound() {
@@ -162,13 +163,20 @@ function loadRound() {
   $("fiche").classList.toggle("hidden", !usesForm);
 
   if (usesForm) {
-    ["f-anime", "f-song", "f-artist", "f-year"].forEach((id) => ($(id).value = ""));
-    // En éclair, on ne demande que l'animé
-    ["f-song", "f-artist", "f-year"].forEach((id) =>
+    ["f-anime", "f-type", "f-num", "f-song", "f-artist", "f-year"].forEach((id) => ($(id).value = ""));
+    // En éclair / chanson complète, on ne demande que l'animé
+    ["f-type", "f-num", "f-song", "f-artist", "f-year"].forEach((id) =>
       $(id).closest(".fiche-field").classList.toggle("hidden", onlyAnime));
   } else {
-    const wrong = shuffle(OPENINGS.filter((o) => o.id !== current.id))
-      .slice(0, CHOICES_PER_ROUND - 1);
+    // Distracteurs à titres distincts (un animé peut avoir un OP et un ED)
+    const usedTitles = new Set([current.title]);
+    const wrong = [];
+    for (const o of shuffle(OPENINGS)) {
+      if (usedTitles.has(o.title)) continue;
+      usedTitles.add(o.title);
+      wrong.push(o);
+      if (wrong.length === CHOICES_PER_ROUND - 1) break;
+    }
     const choices = shuffle([current, ...wrong]);
     const box = $("choices");
     box.innerHTML = "";
@@ -284,8 +292,9 @@ function revealCommon(current) {
     cover.classList.add("cover--revealed");
   }
   $("answer-title").textContent = current.title;
+  const kind = `${current.type === "ED" ? "Ending" : "Opening"} ${current.seq}`;
   const meta = [current.song, current.artist].filter(Boolean).join(" — ");
-  $("answer-song").textContent = `${meta} · ${current.year}`;
+  $("answer-song").textContent = `${kind} · ${meta} · ${current.year}`;
   $("answer-song").style.display = state.mode === "fiche" ? "none" : "";
   $("score").textContent = `Score : ${state.score}`;
   $("reveal").classList.remove("hidden");
@@ -337,25 +346,31 @@ function validateFiche(e) {
   setPlayBtn("idle");
 
   const current = state.deck[state.index];
-  const fields = [
-    { label: "Animé", val: $("f-anime").value, answer: current.title, aliases: current.aliases },
-    { label: "Opening", val: $("f-song").value, answer: current.song },
-    { label: "Artiste", val: $("f-artist").value, answer: current.artist },
-    { label: "Année", val: $("f-year").value, answer: String(current.year), exact: true }
-  ].filter((f) => f.answer); // on ignore une info absente (ex : artiste inconnu)
+  const kindLabel = current.type === "ED" ? "Ending" : "Opening";
+
+  // Une info par ligne : animé, type OP/ED, numéro, musique, artiste, année
+  const checks = [
+    { label: "Animé", ok: matchAnswer($("f-anime").value, current.title, { aliases: current.aliases }), display: current.title },
+    { label: "Opening / Ending", ok: $("f-type").value === current.type, display: kindLabel },
+    { label: "Numéro", ok: Number($("f-num").value) === current.seq, display: `${current.type}${current.seq}` },
+    { label: "Musique", ok: matchAnswer($("f-song").value, current.song, {}), display: current.song }
+  ];
+  if (current.artist) {
+    checks.push({ label: "Artiste", ok: matchAnswer($("f-artist").value, current.artist, {}), display: current.artist });
+  }
+  checks.push({ label: "Année", ok: matchAnswer($("f-year").value, String(current.year), { exact: true }), display: String(current.year) });
 
   let gained = 0;
   const box = $("reveal-fiche");
   box.innerHTML = "";
-  fields.forEach((f) => {
-    const ok = matchAnswer(f.val, f.answer, f);
-    if (ok) gained++;
+  checks.forEach((c) => {
+    if (c.ok) gained++;
     const row = document.createElement("div");
-    row.className = `fiche-row ${ok ? "good" : "bad"}`;
+    row.className = `fiche-row ${c.ok ? "good" : "bad"}`;
     const tag = document.createElement("span");
-    tag.textContent = `${ok ? "✅" : "❌"} ${f.label}`;
+    tag.textContent = `${c.ok ? "✅" : "❌"} ${c.label}`;
     const val = document.createElement("em");
-    val.textContent = f.answer;
+    val.textContent = c.display;
     row.append(tag, val);
     box.appendChild(row);
   });
@@ -363,7 +378,7 @@ function validateFiche(e) {
   box.classList.remove("hidden");
 
   const result = $("reveal-result");
-  result.textContent = `${gained} / ${fields.length} infos · +${gained}`;
+  result.textContent = `${gained} / ${checks.length} infos · +${gained}`;
   result.className = `reveal-result ${gained > 0 ? "good" : "bad"}`;
 
   revealCommon(current);

@@ -29,10 +29,33 @@ const ALIASES = {
   "no-game-no-life": ["NGNL"],
   "dr-stone": ["Doctor Stone"],
   "k-on": ["Keion", "K On"],
-  "bocchi-the-rock": ["Bocchi"]
+  "bocchi-the-rock": ["Bocchi"],
+  "sousou-no-frieren": ["Sousou no Frieren", "Frieren Beyond Journey's End"],
+  "ore-dake-level-up-na-ken": ["Solo Leveling", "Ore dake Level Up na Ken"],
+  "nanatsu-no-taizai": ["Seven Deadly Sins", "Nanatsu no Taizai"],
+  "jojo-no-kimyou-na-bouken": ["JoJo", "JoJo no Kimyou na Bouken", "Bizarre Adventure"],
+  "kusuriya-no-hitorigoto": ["The Apothecary Diaries", "Kusuriya no Hitorigoto"],
+  "tensei-shitara-slime-datta-ken": ["Slime", "That Time I Got Reincarnated as a Slime", "Tensei Shitara Slime Datta Ken"],
+  "tate-no-yuusha-no-nariagari": ["Shield Hero", "The Rising of the Shield Hero", "Tate no Yuusha"],
+  "kiseijuu-sei-no-kakuritsu": ["Parasyte", "Kiseijuu"],
+  "ousama-ranking": ["Ranking of Kings", "Ousama Ranking"],
+  "fumetsu-no-anata-e": ["To Your Eternity", "Fumetsu no Anata e"],
+  "gotoubun-no-hanayome": ["The Quintessential Quintuplets", "Gotoubun no Hanayome"],
+  "kanojo-okarishimasu": ["Rent a Girlfriend", "Kanojo Okarishimasu"],
+  "mushoku-tensei-isekai-ittara-honki-dasu": ["Mushoku Tensei", "Jobless Reincarnation"],
+  "bishoujo-senshi-sailor-moon": ["Sailor Moon", "Bishoujo Senshi Sailor Moon"],
+  "kuroshitsuji": ["Black Butler", "Kuroshitsuji"],
+  "ao-no-exorcist": ["Blue Exorcist", "Ao no Exorcist"],
+  "mahouka-koukou-no-rettousei": ["The Irregular at Magic High School", "Mahouka"],
+  "mirai-nikki": ["Future Diary", "Mirai Nikki"],
+  "ouran-koukou-host-club": ["Ouran High School Host Club", "Ouran"],
+  "hataraku-saibou": ["Cells at Work", "Hataraku Saibou"],
+  "jigokuraku": ["Hell's Paradise", "Jigokuraku"],
+  "boruto-naruto-next-generations": ["Boruto"],
+  "fullmetal-alchemist": ["Hagane no Renkinjutsushi", "FMA 2003"]
 };
 
-// Rattache les alias à chaque opening (utilisé par le matching du mode Fiche)
+// Rattache les alias à chaque opening/ending (clé = anime, pas l'id unique)
 if (typeof OPENINGS !== "undefined") {
-  OPENINGS.forEach((o) => { o.aliases = ALIASES[o.id] || []; });
+  OPENINGS.forEach((o) => { o.aliases = ALIASES[o.anime] || []; });
 }

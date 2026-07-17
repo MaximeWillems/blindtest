@@ -80,7 +80,7 @@ function joinRoom() {
 function launchOnline() {
   // Aperçu : on lance le moteur local avec les réglages du salon.
   // Plus tard : Net.startGame(settings) synchronisera tous les joueurs.
-  beginGame($("on-mode").value, Number($("on-rounds").value), "toutes");
+  beginGame($("on-mode").value, Number($("on-rounds").value), "toutes", false);
 }
 
 // Câblage

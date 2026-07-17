@@ -57,10 +57,14 @@
           </select>
         </label>
 
+        <label class="check">
+          <input type="checkbox" id="include-ed"> Inclure aussi les endings
+        </label>
+
         <button id="btn-start" class="btn btn-primary">Commencer</button>
       </div>
 
-      <p class="note">53 openings d'animés · extraits audio via
+      <p class="note">290 openings (+ 464 endings en option) · extraits audio via
         <a href="https://animethemes.moe" target="_blank" rel="noopener">AnimeThemes.moe</a>.</p>
     </section>
 
@@ -87,8 +91,16 @@
       <form id="fiche" class="fiche hidden" autocomplete="off">
         <label class="fiche-field"><span>Animé</span>
           <input id="f-anime" type="text" placeholder="Nom de l'animé"></label>
-        <label class="fiche-field"><span>Opening</span>
-          <input id="f-song" type="text" placeholder="Titre de la musique"></label>
+        <label class="fiche-field"><span>Opening ou ending ?</span>
+          <select id="f-type">
+            <option value="">—</option>
+            <option value="OP">Opening</option>
+            <option value="ED">Ending</option>
+          </select></label>
+        <label class="fiche-field"><span>Numéro</span>
+          <input id="f-num" type="text" inputmode="numeric" placeholder="1, 2, 3…"></label>
+        <label class="fiche-field"><span>Titre de la musique</span>
+          <input id="f-song" type="text" placeholder="Nom de la chanson"></label>
         <label class="fiche-field"><span>Artiste / groupe</span>
           <input id="f-artist" type="text" placeholder="Qui chante ?"></label>
         <label class="fiche-field"><span>Année</span>

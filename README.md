@@ -8,20 +8,23 @@ Devine l'animé à partir de l'extrait audio de son opening, révèle la répons
 
 ## État actuel
 
-Prototype jouable — 3 modes solo (choisis sur l'accueil) :
+Prototype jouable — 4 modes solo (choisis sur l'accueil) :
 
 - **Classique** — QCM 4 propositions, bonus de rapidité
-- **Fiche complète** — saisir un max d'infos (animé, opening, artiste, année), 1 pt / info
+- **Fiche complète** — saisir un max d'infos (animé, opening ou ending, numéro, musique, artiste, année), 1 pt / info
 - **Éclair** — deviner l'animé en **saisie libre** sur **1 seconde** d'extrait (démarrée dans le morceau, pas sur l'intro)
 - **Chanson complète** — opening entier, **sans pause ni chrono** ; saisie libre du nom de l'animé, on révèle quand on est prêt (score forfaitaire)
 - **En ligne** — écrans « salon » (créer / rejoindre) en place ; réseau à brancher (voir plus bas)
+
+Une case **« Inclure aussi les endings »** sur l'accueil ajoute les ED aux OP
+(par défaut : openings uniquement).
 
 Fichiers :
 
 - `index.html` — 3 écrans : accueil (mode + manches + difficulté), jeu, fin
 - `style.css` — dark mode auto, responsive mobile, branding PIKI
-- `data.js` — **banque de 53 openings** générée depuis l'API AnimeThemes.moe
-- `aliases.js` — alias de titres (FR/anglais/japonais) pour la saisie du mode Fiche
+- `data.js` — **banque de 290 openings + 464 endings** (tous les OP/ED de chaque animé) depuis l'API AnimeThemes.moe
+- `aliases.js` — alias de titres (FR/anglais/japonais), rattachés par animé au chargement
 - `app.js` — système de modes : tirage, timer, saisie/QCM, scoring, révélation
 - `.claude/launch.json` — serveur local de test (`python -m http.server`)
 - `wrangler.jsonc` / `.assetsignore` — déploiement Cloudflare Pages/Workers
@@ -47,11 +50,13 @@ Donc zéro backend, zéro souci CORS.
 Format d'une entrée (`data.js`) :
 
 ```js
-{ id, title, audio, cover, year, song, artist, difficulty }
+{ id, anime, title, type, seq, audio, cover, year, song, artist, difficulty }
 ```
 
-- `title` : bonne réponse (nom de l'animé) — `difficulty` : `facile` | `moyen`
-- `audio` : extrait `.ogg` (OP complet ~90 s, on n'en joue qu'un bout)
+- `id` : unique par entrée (ex. `naruto-op1`) — `anime` : slug de l'animé (clé des alias)
+- `title` : bonne réponse (nom de l'animé) — `type` : `"OP"` | `"ED"` — `seq` : numéro (1, 2…)
+- `difficulty` : `facile` | `moyen` (assigné à la main, pas dans l'API)
+- `audio` : extrait `.ogg` (OP/ED complet ~90 s, on n'en joue qu'un bout)
 - `cover` : jaquette (affichée à la révélation seulement)
 
 ### Regénérer / enrichir la banque
