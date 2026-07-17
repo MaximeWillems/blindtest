@@ -11,7 +11,7 @@ Devine l'animé à partir de l'extrait audio de son opening, révèle la répons
 Prototype jouable — 4 modes solo (choisis sur l'accueil) :
 
 - **Classique** — QCM 4 propositions, bonus de rapidité
-- **Fiche complète** — saisir un max d'infos (animé, opening ou ending, numéro, musique, artiste, année), 1 pt / info
+- **Fiche complète** — saisir un max d'infos, points par info (voir `FICHE_POINTS` dans `app.js` : musique 3, animé 2, artiste 2, type/numéro/année 1 — max 10/manche)
 - **Éclair** — deviner l'animé en **saisie libre** sur **1 seconde** d'extrait (démarrée dans le morceau, pas sur l'intro)
 - **Chanson complète** — opening entier, **sans pause ni chrono** ; saisie libre du nom de l'animé, on révèle quand on est prêt (score forfaitaire)
 - **En ligne** — écrans « salon » (créer / rejoindre) en place ; réseau à brancher (voir plus bas)

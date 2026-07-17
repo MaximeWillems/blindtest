@@ -16,6 +16,9 @@ const FLASH_MS = 1000;        // durée jouée en mode éclair
 const FULL_SCORE = 10;        // points d'une bonne réponse en mode chanson complète
 const CHOICES_PER_ROUND = 4;  // propositions au QCM
 
+// Points par info devinée en mode Fiche complète
+const FICHE_POINTS = { anime: 2, type: 1, seq: 1, song: 3, artist: 2, year: 1 };
+
 const state = {
   mode: "qcm",
   deck: [],        // openings tirés pour la partie
@@ -348,27 +351,28 @@ function validateFiche(e) {
   const current = state.deck[state.index];
   const kindLabel = current.type === "ED" ? "Ending" : "Opening";
 
-  // Une info par ligne : animé, type OP/ED, numéro, musique, artiste, année
+  // Une info par ligne, chacune vaut un nombre de points (voir FICHE_POINTS)
   const checks = [
-    { label: "Animé", ok: matchAnswer($("f-anime").value, current.title, { aliases: current.aliases }), display: current.title },
-    { label: "Opening / Ending", ok: $("f-type").value === current.type, display: kindLabel },
-    { label: "Numéro", ok: Number($("f-num").value) === current.seq, display: `${current.type}${current.seq}` },
-    { label: "Musique", ok: matchAnswer($("f-song").value, current.song, {}), display: current.song }
+    { label: "Animé", pts: FICHE_POINTS.anime, ok: matchAnswer($("f-anime").value, current.title, { aliases: current.aliases }), display: current.title },
+    { label: "Opening / Ending", pts: FICHE_POINTS.type, ok: $("f-type").value === current.type, display: kindLabel },
+    { label: "Numéro", pts: FICHE_POINTS.seq, ok: Number($("f-num").value) === current.seq, display: `${current.type}${current.seq}` },
+    { label: "Musique", pts: FICHE_POINTS.song, ok: matchAnswer($("f-song").value, current.song, {}), display: current.song }
   ];
   if (current.artist) {
-    checks.push({ label: "Artiste", ok: matchAnswer($("f-artist").value, current.artist, {}), display: current.artist });
+    checks.push({ label: "Artiste", pts: FICHE_POINTS.artist, ok: matchAnswer($("f-artist").value, current.artist, {}), display: current.artist });
   }
-  checks.push({ label: "Année", ok: matchAnswer($("f-year").value, String(current.year), { exact: true }), display: String(current.year) });
+  checks.push({ label: "Année", pts: FICHE_POINTS.year, ok: matchAnswer($("f-year").value, String(current.year), { exact: true }), display: String(current.year) });
 
   let gained = 0;
+  let correctCount = 0;
   const box = $("reveal-fiche");
   box.innerHTML = "";
   checks.forEach((c) => {
-    if (c.ok) gained++;
+    if (c.ok) { gained += c.pts; correctCount++; }
     const row = document.createElement("div");
     row.className = `fiche-row ${c.ok ? "good" : "bad"}`;
     const tag = document.createElement("span");
-    tag.textContent = `${c.ok ? "✅" : "❌"} ${c.label}`;
+    tag.textContent = `${c.ok ? "✅" : "❌"} ${c.label} · ${c.pts} pt${c.pts > 1 ? "s" : ""}`;
     const val = document.createElement("em");
     val.textContent = c.display;
     row.append(tag, val);
@@ -378,7 +382,7 @@ function validateFiche(e) {
   box.classList.remove("hidden");
 
   const result = $("reveal-result");
-  result.textContent = `${gained} / ${checks.length} infos · +${gained}`;
+  result.textContent = `${correctCount} / ${checks.length} infos · +${gained} pts`;
   result.className = `reveal-result ${gained > 0 ? "good" : "bad"}`;
 
   revealCommon(current);
