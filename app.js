@@ -362,7 +362,7 @@ function answer(choice, btn) {
   $("reveal-fiche").classList.add("hidden");
   const result = $("reveal-result");
   if (correct) {
-    result.textContent = `✅ Bien joué ! +${gained}`;
+    result.textContent = `✅ Bien joué ! ${gained} / ${GUESS_TIME} pts`;
     result.className = "reveal-result good";
   } else {
     result.textContent = choice ? "❌ Raté" : "⏱️ Temps écoulé";
@@ -415,8 +415,9 @@ function validateFiche(e) {
   state.score += gained;
   box.classList.remove("hidden");
 
+  const maxPts = checks.reduce((sum, c) => sum + c.pts, 0);
   const result = $("reveal-result");
-  result.textContent = `${correctCount} / ${checks.length} infos · +${gained} pts`;
+  result.textContent = `${correctCount} / ${checks.length} infos · ${gained} / ${maxPts} pts`;
   result.className = `reveal-result ${gained > 0 ? "good" : "bad"}`;
 
   revealCommon(current);
@@ -442,7 +443,7 @@ function validateAnime(e) {
 
   $("reveal-fiche").classList.add("hidden");
   const result = $("reveal-result");
-  if (ok) { result.textContent = `✅ Bien joué ! +${gained}`; result.className = "reveal-result good"; }
+  if (ok) { result.textContent = `✅ Bien joué ! ${gained} / ${GUESS_TIME} pts`; result.className = "reveal-result good"; }
   else { result.textContent = "❌ Raté"; result.className = "reveal-result bad"; }
 
   revealCommon(current);
