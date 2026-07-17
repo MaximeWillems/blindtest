@@ -265,7 +265,7 @@ function playFlashClip() {
 }
 
 // Joue l'extrait du mode fiche selon la longueur choisie (state.clipLen secondes,
-// ou la chanson entière). Redémarre du début à chaque écoute (pas de pause).
+// ou la chanson entière). Une seule écoute par manche (le bouton est désactivé après).
 function playFicheClip() {
   const audio = $("audio");
   if (!audio.src) return;
@@ -282,7 +282,7 @@ function playFicheClip() {
   if (L !== Infinity) {
     const stopAt = start + L;
     state.flashClip = () => {
-      if (audio.currentTime >= stopAt) { audio.pause(); setPlayBtn("idle"); stopFlashClip(); }
+      if (audio.currentTime >= stopAt) { audio.pause(); stopFlashClip(); }
     };
     audio.addEventListener("timeupdate", state.flashClip);
   }
@@ -293,9 +293,10 @@ function onPlayButton() {
   const audio = $("audio");
   if (!audio.src || state.answered) return;
 
-  if (state.mode === "fiche") {         // (ré)écoute selon la longueur choisie, pas de chrono
+  if (state.mode === "fiche") {         // une seule écoute (pas de réécoute), longueur choisie
     playFicheClip();
-    setPlayBtn("replay");
+    $("btn-play").disabled = true;
+    $("btn-play").textContent = "🔇 Écoute utilisée";
     return;
   }
 
