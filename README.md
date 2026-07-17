@@ -13,6 +13,7 @@ Prototype jouable — 3 modes solo (choisis sur l'accueil) :
 - **Classique** — QCM 4 propositions, bonus de rapidité
 - **Fiche complète** — saisir un max d'infos (animé, opening, artiste, année), 1 pt / info
 - **Éclair** — deviner l'animé en **saisie libre** sur **1 seconde** d'extrait (démarrée dans le morceau, pas sur l'intro)
+- **Chanson complète** — opening entier, **sans pause ni chrono** ; saisie libre du nom de l'animé, on révèle quand on est prêt (score forfaitaire)
 - **En ligne** — écrans « salon » (créer / rejoindre) en place ; réseau à brancher (voir plus bas)
 
 Fichiers :

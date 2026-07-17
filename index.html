@@ -30,6 +30,9 @@
             <button type="button" class="mode-card" data-mode="flash">
               <strong>Éclair</strong><small>1 seconde d'extrait</small>
             </button>
+            <button type="button" class="mode-card" data-mode="full">
+              <strong>Chanson complète</strong><small>Écoute libre, sans pause</small>
+            </button>
             <button type="button" class="mode-card mode-card--online" data-mode="online">
               <strong>En ligne</strong><small>Multijoueur · aperçu</small>
             </button>
@@ -71,7 +74,7 @@
       <div class="player">
         <div class="cover" id="cover">🎧</div>
         <audio id="audio" preload="auto"></audio>
-        <div class="timer-wrap"><div id="timer-bar" class="timer-bar"></div></div>
+        <div id="timer-wrap" class="timer-wrap"><div id="timer-bar" class="timer-bar"></div></div>
         <button id="btn-play" class="btn btn-play">▶︎ Écouter</button>
         <div class="volume">
           <button id="vol-icon" class="vol-icon" type="button" title="Couper / rétablir le son">🔊</button>

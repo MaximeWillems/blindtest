@@ -4,6 +4,7 @@
 //   - qcm    : QCM 4 propositions, bonus de rapidité
 //   - fiche  : saisir un max d'infos (animé, opening, artiste, année), 1 pt / info
 //   - flash  : deviner l'animé (saisie libre) sur 1 seconde d'extrait seulement
+//   - full   : chanson entière, sans pause ni chrono ; on répond puis « prêt » révèle
 // Le mode « en ligne » (multijoueur) viendra avec un petit backend — voir README.
 //
 // Extension prévue : mode « soirée » local, alias de titres pour la saisie,
@@ -12,6 +13,7 @@
 const GUESS_TIME = 15;        // secondes pour répondre (qcm / flash)
 const FICHE_TIME = 30;        // secondes pour remplir la fiche
 const FLASH_MS = 1000;        // durée jouée en mode éclair
+const FULL_SCORE = 10;        // points d'une bonne réponse en mode chanson complète
 const CHOICES_PER_ROUND = 4;  // propositions au QCM
 
 const state = {
@@ -134,8 +136,8 @@ function loadRound() {
   state.answered = false;
   stopFlashClip();
   const current = state.deck[state.index];
-  const usesForm = state.mode === "fiche" || state.mode === "flash"; // saisie libre
-  const onlyAnime = state.mode === "flash";                          // un seul champ
+  const usesForm = ["fiche", "flash", "full"].includes(state.mode);  // saisie libre
+  const onlyAnime = state.mode === "flash" || state.mode === "full"; // un seul champ
 
   $("progress").textContent = `Manche ${state.index + 1} / ${state.totalRounds}`;
   $("score").textContent = `Score : ${state.score}`;
@@ -152,6 +154,8 @@ function loadRound() {
   audio.src = current.audio || "";
   audio.load();
   setPlayBtn("idle");
+  $("timer-wrap").classList.toggle("hidden", state.mode === "full"); // full : pas de chrono
+  $("btn-validate").textContent = state.mode === "full" ? "Prêt — révéler" : "Valider";
 
   // Bascule QCM <-> saisie libre
   $("choices").classList.toggle("hidden", usesForm);
@@ -198,7 +202,7 @@ function startTimer() {
       clearInterval(state.timerId);
       if (!state.answered) {
         if (state.mode === "fiche") validateFiche(null);
-        else if (state.mode === "flash") validateFlash(null);
+        else if (state.mode === "flash") validateAnime(null);
         else answer(null, null); // temps écoulé
       }
     }
@@ -244,6 +248,12 @@ function playFlashClip() {
 function onPlayButton() {
   const audio = $("audio");
   if (!audio.src || state.answered) return;
+
+  if (state.mode === "full") {          // chanson entière : pas de pause, pas de chrono
+    audio.currentTime = 0;
+    audio.play().catch(() => { /* extrait indispo : on continue sans son */ });
+    return;
+  }
 
   if (state.mode === "flash") {
     const fresh = state.timeLeft === state.roundTime;
@@ -359,8 +369,9 @@ function validateFiche(e) {
   revealCommon(current);
 }
 
-// Mode éclair : deviner l'animé à partir d'1 s (saisie libre, bonus de rapidité)
-function validateFlash(e) {
+// Modes éclair / chanson complète : deviner l'animé en saisie libre
+// (bonus de rapidité en éclair, points forfaitaires en chanson complète)
+function validateAnime(e) {
   if (e) e.preventDefault();
   if (state.answered) return;
   state.answered = true;
@@ -372,7 +383,10 @@ function validateFlash(e) {
   const current = state.deck[state.index];
   const ok = matchAnswer($("f-anime").value, current.title, { aliases: current.aliases });
   let gained = 0;
-  if (ok) { gained = Math.max(1, Math.round(state.timeLeft)); state.score += gained; }
+  if (ok) {
+    gained = state.mode === "flash" ? Math.max(1, Math.round(state.timeLeft)) : FULL_SCORE;
+    state.score += gained;
+  }
 
   $("reveal-fiche").classList.add("hidden");
   const result = $("reveal-result");
@@ -427,6 +441,6 @@ $("btn-start").onclick = startGame;
 $("btn-play").onclick = onPlayButton;
 $("btn-next").onclick = nextRound;
 $("btn-replay").onclick = () => show("home");
-$("fiche").onsubmit = (e) => (state.mode === "flash" ? validateFlash(e) : validateFiche(e));
+$("fiche").onsubmit = (e) => (state.mode === "fiche" ? validateFiche(e) : validateAnime(e));
 
 show("home");
