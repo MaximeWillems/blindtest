@@ -161,6 +161,7 @@ function startMpRound(m) {
   }, 1000);
 
   show("mpGame");
+  mpPlay(); // lance automatiquement la musique pour tout le monde
 }
 
 function stopMpClip() {
@@ -176,14 +177,19 @@ function mpPlay() {
   let start = 0;
   if (L <= 3 && dur > 8) { start = Math.min(30, Math.max(6, dur * 0.22)); start = Math.min(start, Math.max(0, dur - L - 1)); }
   try { audio.currentTime = start; } catch (e) { /* pas encore seekable */ }
-  audio.play().catch(() => {});
-  if (L !== Infinity) {
-    const stopAt = start + L;
-    mp.clip = () => { if (audio.currentTime >= stopAt) { audio.pause(); stopMpClip(); } };
-    audio.addEventListener("timeupdate", mp.clip);
-  }
-  $("mp-play").disabled = true;
-  $("mp-play").textContent = "🔇 Écoute utilisée";
+  const btn = $("mp-play");
+  btn.disabled = true;
+  btn.textContent = "🔇 Écoute utilisée";
+  const onOk = () => {
+    if (L !== Infinity) {
+      const stopAt = start + L;
+      mp.clip = () => { if (audio.currentTime >= stopAt) { audio.pause(); stopMpClip(); } };
+      audio.addEventListener("timeupdate", mp.clip);
+    }
+  };
+  const onFail = () => { btn.disabled = false; btn.textContent = "▶︎ Écouter"; stopMpClip(); };
+  const p = audio.play();
+  if (p && p.then) p.then(onOk, onFail); else onOk();
 }
 
 function submitMpFiche(e) {
@@ -280,6 +286,7 @@ $("btn-join").onclick = joinRoom;
 $("btn-launch").onclick = launchGame;
 $("mp-play").onclick = mpPlay;
 $("mp-fiche").onsubmit = submitMpFiche;
+$("mp-fiche").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.type !== "submit") e.preventDefault(); });
 $("mp-again").onclick = () => netSend({ t: "start" });
 $("btn-copy").onclick = () => { if (navigator.clipboard) navigator.clipboard.writeText(mp.code || "").catch(() => {}); };
 document.querySelectorAll("[data-back]").forEach((b) => (b.onclick = () => {

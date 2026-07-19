@@ -195,6 +195,7 @@ function loadRound() {
 
   state.roundTime = GUESS_TIME;
   resetTimer();
+  onPlayButton(); // lance automatiquement la musique en début de manche
 }
 
 function resetTimer() {
@@ -280,14 +281,19 @@ function playFicheClip() {
     start = Math.min(start, Math.max(0, dur - L - 1));
   }
   try { audio.currentTime = start; } catch (e) { /* pas encore seekable */ }
-  audio.play().catch(() => { /* extrait indispo : on continue sans son */ });
-  if (L !== Infinity) {
-    const stopAt = start + L;
-    state.flashClip = () => {
-      if (audio.currentTime >= stopAt) { audio.pause(); stopFlashClip(); }
-    };
-    audio.addEventListener("timeupdate", state.flashClip);
-  }
+  const btn = $("btn-play");
+  btn.disabled = true;
+  btn.textContent = "🔇 Écoute utilisée";
+  const onOk = () => {
+    if (L !== Infinity) {
+      const stopAt = start + L;
+      state.flashClip = () => { if (audio.currentTime >= stopAt) { audio.pause(); stopFlashClip(); } };
+      audio.addEventListener("timeupdate", state.flashClip);
+    }
+  };
+  const onFail = () => { btn.disabled = false; btn.textContent = "▶︎ Écouter"; stopFlashClip(); };
+  const p = audio.play();
+  if (p && p.then) p.then(onOk, onFail); else onOk();
 }
 
 // Bouton lecture : éclair/fiche (ré)écoutent l'extrait ; qcm lecture/pause (gèle le chrono)
@@ -297,8 +303,6 @@ function onPlayButton() {
 
   if (state.mode === "fiche") {         // une seule écoute (pas de réécoute), longueur choisie
     playFicheClip();
-    $("btn-play").disabled = true;
-    $("btn-play").textContent = "🔇 Écoute utilisée";
     return;
   }
 
@@ -499,5 +503,7 @@ $("btn-play").onclick = onPlayButton;
 $("btn-next").onclick = nextRound;
 $("btn-replay").onclick = () => show("home");
 $("fiche").onsubmit = (e) => (state.mode === "fiche" ? validateFiche(e) : validateAnime(e));
+// Entrée dans un champ ne valide pas (évite les validations accidentelles) — seul le bouton valide
+$("fiche").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.type !== "submit") e.preventDefault(); });
 
 show("home");
