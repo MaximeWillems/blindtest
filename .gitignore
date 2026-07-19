@@ -1,6 +1,10 @@
 # Config locale de dev (Claude Code / serveur de preview) — inutile au déploiement
 .claude/
 
+# Node / Wrangler
+node_modules/
+.wrangler/
+
 # Fichiers système
 .DS_Store
 Thumbs.db

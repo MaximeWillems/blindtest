@@ -73,19 +73,27 @@ Les extraits AnimeThemes sont en `.ogg`, lus par Chrome/Edge/Firefox/Android mai
 Correctif prévu : transcoder les extraits en `.m4a`/`.mp3` et les auto-héberger
 (Cloudflare R2), ou passer par un petit Worker.
 
-## Mode en ligne — où on en est
+## Mode en ligne (multijoueur) — Worker + Durable Object
 
-L'**UI est en place** (`online.js` + écrans lobby/salon dans `index.html`) : créer un
-salon avec un code, rejoindre avec un code, liste des joueurs, réglages hôte, lancer.
-Pour l'instant c'est un **aperçu local** — bannière « réseau non branché ». Le
-lancement réutilise le moteur de jeu solo, les scores ne sont pas encore synchronisés.
+**Fonctionnel (phase 1, mode Fiche)** : salon temps réel **serveur-autoritaire**.
 
-Le câblage réseau passe par l'objet **`Net`** (dans `online.js`), aujourd'hui stubbé
-avec des `TODO`. Reste à choisir la techno (décision en attente) :
+- **Backend** — `worker/index.js` : un **Worker Cloudflare** sert le site statique ET
+  l'API temps réel. Un salon = un **Durable Object `Room`** (API d'hibernation, état en
+  storage SQLite = palier gratuit, timers en `alarms`). Le serveur choisit les openings,
+  chronomètre, **valide et compte les points** (banque + matching flou portés côté serveur) —
+  les clients ne reçoivent jamais la réponse avant la révélation.
+- **Client** — `online.js` : vrai client WebSocket. Créer/rejoindre un salon (code),
+  liste des joueurs en direct, réglages hôte, écran de jeu multi (fiche + chrono + écoute
+  unique), révélation avec barème, scoreboard en direct, podium.
 
-1. **Salon temps réel** — Cloudflare Worker + Durable Objects (vrai multijoueur live).
-2. **Défi du jour** — mêmes openings pour tous chaque jour, partage de score (quasi-statique, gratuit).
-3. **Salon P2P** — WebRTC, sans serveur à héberger (plus fragile).
+**Config validée** : 0 € (Durable Objects gratuits), desktop/Android d'abord, chrono par
+manche + fin anticipée quand tous ont validé, URL audio directe (spoiler assumé).
+
+**Lancer en local** : `wrangler dev` (Node 20 ici → **`npx wrangler@3`** ; la v4 exige
+Node 22). ⚠️ Ajouter **`--persist-to <dossier hors du projet>`** sinon le dev recharge en
+boucle (le DO écrit dans la racine surveillée par le watcher d'assets).
+
+**À suivre** : iOS (transcodage audio), QCM/Éclair en multi, reconnexion, anti-spoiler.
 
 ## Idées d'extension
 
@@ -96,5 +104,8 @@ avec des `TODO`. Reste à choisir la techno (décision en attente) :
 
 ## Déploiement
 
-Comme le hub : repo GitHub → Cloudflare Pages/Workers (preset None, build vide,
-output `/`), puis Custom domain `blindtest.pikilab.app`.
+Depuis l'ajout du multijoueur, le site est un **Worker Cloudflare** (il sert le
+statique + l'API temps réel), plus un Pages statique pur. Déploiement via
+**`npx wrangler@3 deploy`** (nécessite la connexion Cloudflare + Workers activé sur le
+compte, gratuit), puis Custom domain `blindtest.pikilab.app`. Le solo reste 100 % statique
+et jouable tel quel.

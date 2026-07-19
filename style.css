@@ -265,6 +265,19 @@ main {
 }
 .player--me { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
 #host-controls { display: flex; flex-direction: column; gap: 1.25rem; }
+.host-note { text-align: center; color: var(--text-muted); }
+
+/* Scoreboard / podium multijoueur */
+.scoreboard { display: grid; gap: .4rem; margin-top: 1rem; text-align: left; }
+.score-row {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .55rem .8rem; border: 1px solid var(--border); border-radius: 10px; font-weight: 600;
+}
+.score-row.me { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.score-row .rank { color: var(--text-muted); min-width: 1.4rem; }
+.score-row .who { flex: 1; }
+.score-row .pts { color: var(--accent); font-weight: 800; }
+.mp-status { text-align: center; color: var(--text-muted); font-weight: 600; margin-top: 1rem; }
 
 footer {
   text-align: center;

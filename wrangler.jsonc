@@ -1,7 +1,19 @@
 {
   "name": "blindtest",
-  "compatibility_date": "2026-07-04",
+  "main": "worker/index.js",
+  "compatibility_date": "2024-11-01",
+  // Sert le site statique (racine) ET l'API temps réel (Worker)
   "assets": {
-    "directory": "./"
-  }
+    "directory": "./",
+    "binding": "ASSETS"
+  },
+  // Un salon multijoueur = un Durable Object "Room" (backend SQLite = palier gratuit)
+  "durable_objects": {
+    "bindings": [
+      { "name": "ROOMS", "class_name": "Room" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["Room"] }
+  ]
 }

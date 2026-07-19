@@ -35,7 +35,9 @@ const screens = {
   game: $("screen-game"),
   end: $("screen-end"),
   online: $("screen-online"),
-  room: $("screen-room")
+  room: $("screen-room"),
+  mpGame: $("screen-mp-game"),
+  mpEnd: $("screen-mp-end")
 };
 
 function show(name) {
